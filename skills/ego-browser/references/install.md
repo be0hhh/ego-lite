@@ -22,6 +22,7 @@ The install steps, the commands that confirm the installation, and the troublesh
 
 - macOS: [install-macos.md](install-macos.md)
 - Windows: [install-windows.md](install-windows.md)
+- WSL agent with the browser in Windows: [install-wsl.md](install-wsl.md)
 - Other platforms: there is no installer. Have the user check https://lite.ego.app/ for a build; if none exists, ego-browser is not available on this machine.
 
 ## Onboarding

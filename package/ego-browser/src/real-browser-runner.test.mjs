@@ -8,9 +8,67 @@ import {
 import { pageActionabilityCase } from "../scripts/real-browser-e2e/cases/page-actionability.mjs";
 import { pageScrolledScreenshotCase } from "../scripts/real-browser-e2e/cases/page-screenshot.mjs";
 import {
+  canReuseE2ePass,
   extractCaseError,
   parseOnlyCases,
 } from "../scripts/real-browser-e2e/runner.mjs";
+import {
+  createBrowserPathMapper,
+  mapBrowserContextPaths,
+} from "../scripts/real-browser-e2e/browser-paths.mjs";
+
+test("a Windows bridge never reuses a browser pass after an app update", () => {
+  assert.equal(
+    canReuseE2ePass({ windowsBrowser: true, isFullRun: true }),
+    false,
+  );
+  assert.equal(
+    canReuseE2ePass({ windowsBrowser: false, isFullRun: true }),
+    true,
+  );
+  assert.equal(
+    canReuseE2ePass({ windowsBrowser: false, isFullRun: false }),
+    false,
+  );
+});
+
+test("Windows-browser E2E maps browser file paths without changing host context", () => {
+  const context = {
+    taskName: "existing browser",
+    baseUrl: "http://127.0.0.1:3000",
+    artifactDir: "/tmp/test/artifacts",
+    tempDir: "/tmp/test",
+    uploadPath: "/tmp/test/upload.txt",
+    uploadPathTwo: "/tmp/test/upload-two.txt",
+    explicitScreenshotPath: "/tmp/test/artifacts/shot.png",
+    environmentScreenshotPath: "/tmp/test/artifacts/environment.png",
+    metadataPath: "/tmp/test/metadata.json",
+    keepTaskSpace: false,
+  };
+  const browser = mapBrowserContextPaths(
+    context,
+    (path) => `//wsl.localhost/Ubuntu${path}`,
+  );
+  assert.deepEqual(browser, {
+    taskName: "existing browser",
+    baseUrl: "http://127.0.0.1:3000",
+    artifactDir: "//wsl.localhost/Ubuntu/tmp/test/artifacts",
+    tempDir: "//wsl.localhost/Ubuntu/tmp/test",
+    uploadPath: "//wsl.localhost/Ubuntu/tmp/test/upload.txt",
+    uploadPathTwo: "//wsl.localhost/Ubuntu/tmp/test/upload-two.txt",
+    explicitScreenshotPath:
+      "//wsl.localhost/Ubuntu/tmp/test/artifacts/shot.png",
+    environmentScreenshotPath:
+      "//wsl.localhost/Ubuntu/tmp/test/artifacts/environment.png",
+    metadataPath: "//wsl.localhost/Ubuntu/tmp/test/metadata.json",
+    keepTaskSpace: false,
+  });
+  assert.equal(context.uploadPath, "/tmp/test/upload.txt");
+  assert.equal(
+    createBrowserPathMapper()(context.uploadPath),
+    context.uploadPath,
+  );
+});
 
 test("real-browser E2E honors an explicit Ego Lite CLI", () => {
   assert.equal(

@@ -159,6 +159,21 @@ space, take control, or change the SDK while it is running. On macOS it selects
 the ego lite app's CLI; use `EGO_BROWSER_REAL_E2E_CLI` to select another installed
 ego lite CLI explicitly.
 
+For an agent running in WSL with ego lite on Windows, first install the
+[WSL bridge](skills/ego-browser/references/install-wsl.md), then run:
+
+```bash
+EGO_BROWSER_REAL_E2E_WINDOWS=1 npm run e2e
+```
+
+This translates the SDK and fixture file paths passed to the Windows browser;
+the runner continues reading and cleaning up those files through their WSL
+paths. Set the same flag for `git push` so the pre-push hook uses this mode too.
+Leave it unset for native macOS, Linux or Windows runs.
+
+The Windows bridge suite always runs and does not reuse or save a last-pass
+record: the Windows app may update behind the unchanged WSL launcher.
+
 After a full pass the suite records a fingerprint of its inputs (`dist/out`,
 the suite under `scripts/real-browser-e2e/`, and the selected CLI's size and
 mtime) in `node_modules/.cache/ego-browser-real-e2e/`. A later `npm run e2e`

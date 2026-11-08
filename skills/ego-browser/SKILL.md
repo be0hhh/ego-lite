@@ -30,7 +30,8 @@ in parts, for example `ego-browser skill > "$TMPDIR/ego-browser-skill.md"`, or
   `ego-browser` is not found, or `skill` is an unknown command. It links to
   the steps for your operating system:
   [macOS](references/install-macos.md) or
-  [Windows](references/install-windows.md).
+  [Windows](references/install-windows.md). For an agent in WSL using the
+  Windows browser, use [Windows from WSL](references/install-wsl.md).
 - [Clearing cookies, cache, and storage](references/clearing-state.md) — read
   before clearing any cookie, cache, or storage; some clears reach the whole
   browser profile.

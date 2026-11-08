@@ -43,6 +43,16 @@ test("real-browser E2E fingerprint changes with any input file", async () => {
   });
 });
 
+test("a native-browser E2E pass cannot skip a Windows-browser run", async () => {
+  await withInputDir(async (dir) => {
+    const options = { inputDirs: [dir], cliPath: "/cli", statFile: fakeStat };
+    assert.notEqual(
+      await computeE2eFingerprint(options),
+      await computeE2eFingerprint({ ...options, browserPathStyle: "windows" }),
+    );
+  });
+});
+
 test("real-browser E2E fingerprint changes when the CLI binary changes", async () => {
   await withInputDir(async (dir) => {
     const before = await computeE2eFingerprint({

@@ -11,9 +11,11 @@ import { join, relative, sep } from "node:path";
 export async function computeE2eFingerprint({
   inputDirs,
   cliPath,
+  browserPathStyle = "native",
   statFile = stat,
 }) {
   const hash = createHash("sha256");
+  hash.update(`browser-paths:${browserPathStyle}\0`);
   for (const dir of inputDirs) {
     for (const file of await listFiles(dir)) {
       hash.update(`${toPosix(relative(dir, file))}\0`);

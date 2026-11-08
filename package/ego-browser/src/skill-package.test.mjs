@@ -222,6 +222,7 @@ test("the bundled entry Skill matches the published entry Skill", async () => {
     "clearing-state.md",
     "install-macos.md",
     "install-windows.md",
+    "install-wsl.md",
     "install.md",
   ]);
   assert.equal(
