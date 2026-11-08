@@ -7,6 +7,10 @@ import { e2eCases } from "./cases/index.mjs";
 import { resolveEgoBrowserCli } from "./ego-browser-cli.mjs";
 import { egoSource } from "./ego-source.mjs";
 import {
+  createBrowserPathMapper,
+  mapBrowserContextPaths,
+} from "./browser-paths.mjs";
+import {
   computeE2eFingerprint,
   isTruthyFlag,
   readLastPass,
@@ -18,7 +22,6 @@ import { runCommand } from "./run-command.mjs";
 const runnerDir = dirname(fileURLToPath(import.meta.url));
 const packageDir = join(runnerDir, "..", "..");
 const egoBrowserSdkPath = join(packageDir, "dist", "out", "index.js");
-const egoBrowserArgs = ["nodejs", "--sdk-path", egoBrowserSdkPath];
 const sdkOutDir = join(packageDir, "dist", "out");
 // Last full pass, keyed by the inputs' fingerprint. Lives under node_modules so
 // `npm ci` and `npm run clean` never leave a stale record behind.
@@ -81,8 +84,19 @@ export function parseOnlyCases(configured, availableCaseNames) {
   return new Set(requested);
 }
 
+export function canReuseE2ePass({ windowsBrowser, isFullRun }) {
+  return isFullRun && !windowsBrowser;
+}
+
 export async function runRealBrowserE2e() {
   const egoBrowserCli = resolveEgoBrowserCli();
+  const windowsBrowser = isTruthyFlag(process.env.EGO_BROWSER_REAL_E2E_WINDOWS);
+  const toBrowserPath = createBrowserPathMapper(windowsBrowser);
+  const egoBrowserArgs = [
+    "nodejs",
+    "--sdk-path",
+    toBrowserPath(egoBrowserSdkPath),
+  ];
   const keepTaskSpace = isTruthyFlag(process.env.EGO_BROWSER_REAL_E2E_KEEP);
   const forceRun = isTruthyFlag(process.env.EGO_BROWSER_REAL_E2E_FORCE);
   const onlyCases = parseOnlyCases(
@@ -107,10 +121,13 @@ export async function runRealBrowserE2e() {
     { expectedOutput, forbiddenOutput } = {},
   ) {
     console.log(`-- ${name}`);
-    const source = egoSource(body, {
-      ...context,
-      keepTaskSpace: keepTaskSpace && passed,
-    });
+    const source = egoSource(
+      body,
+      mapBrowserContextPaths(
+        { ...context, keepTaskSpace: keepTaskSpace && passed },
+        toBrowserPath,
+      ),
+    );
     const startedAt = Date.now();
     try {
       const { stdout, stderr } = await runCommand(
@@ -165,10 +182,13 @@ export async function runRealBrowserE2e() {
     expectedOutput,
   ) {
     console.log(`-- ${name}`);
-    const source = egoSource(body, {
-      ...context,
-      keepTaskSpace: keepTaskSpace && passed,
-    });
+    const source = egoSource(
+      body,
+      mapBrowserContextPaths(
+        { ...context, keepTaskSpace: keepTaskSpace && passed },
+        toBrowserPath,
+      ),
+    );
     const startedAt = Date.now();
     let commandError;
     let commandResult;
@@ -276,9 +296,11 @@ export async function runRealBrowserE2e() {
     const fingerprint = await computeE2eFingerprint({
       inputDirs: [sdkOutDir, runnerDir],
       cliPath: egoBrowserCli,
+      browserPathStyle: windowsBrowser ? "windows" : "native",
     });
     const isFullRun = onlyCases.size === 0;
-    if (isFullRun && !forceRun) {
+    const reusablePass = canReuseE2ePass({ windowsBrowser, isFullRun });
+    if (reusablePass && !forceRun) {
       const lastPass = await readLastPass(lastPassRecordPath);
       if (lastPass?.fingerprint === fingerprint) {
         console.log(
@@ -343,7 +365,7 @@ export async function runRealBrowserE2e() {
 
     if (!passed) {
       process.exitCode = 1;
-    } else if (isFullRun) {
+    } else if (reusablePass) {
       await writeLastPass(lastPassRecordPath, {
         fingerprint,
         passedAt: new Date().toISOString(),

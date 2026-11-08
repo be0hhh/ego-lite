@@ -2,6 +2,10 @@
 
 Read `install.md` first; it covers upgrading an older ego lite and the onboarding step shared by every platform. This file has the Windows install steps, the commands that confirm the installation, and Windows troubleshooting.
 
+If the agent runs in WSL while the browser runs in Windows, complete onboarding
+below, then follow [install-wsl.md](install-wsl.md) to expose the Windows CLI to
+the WSL agent.
+
 ## Run the installer
 
 There is no install script for Windows. Have the user download the installer from https://lite.ego.app/ and run it, then open ego lite.
